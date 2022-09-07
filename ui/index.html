@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./styles.css" />
+    <title>Sequence Diagram</title>
+  </head>
+  <body>
+    <main class="main">
+      <section class="input-section">
+        <div>
+          <div class="instructions-box">
+            <p>Add comments to code in the following format:</p>
+            <p class="instructions-example instructions-example-comment">
+              //@@@tourStart(step:01 id:4753475)
+            </p>
+            <p class="instructions-example">
+              const code = "whatever existing code here"
+            </p>
+            <p class="instructions-example instructions-example-comment">
+              //@@@tourEnd
+            </p>
+            <h2>STEP 1 - Add comments to code</h2>
+          </div>
+          <form class="folder-form form" id="folderForm">
+            <input
+              id="folderField"
+              class="folder-field"
+              type="text"
+              name="folder"
+              required
+            />
+            <label class="folder-field-label"
+              >Enter project root folder path here</label
+            >
+            <button>STEP 2 - Generate UML source code</button>
+          </form>
+        </div>
+        <form class="uml-form form" id="umlForm">
+          <textarea class="uml-field" id="umlField">
+UML code will load here</textarea
+          >
+          <button>STEP 3 - Generate Diagram</button>
+        </form>
+      </section>
+      <div class="canvas" id="canvas">
+        <!-- <p>Generated Sequence Diagram will display here</p> -->
+      </div>
+      <button class="button-disabled" id="buttonGeneratePage" disabled>
+        STEP 4 - Save standalone diagram page
+      </button>
+    </main>
+    <script src="./index.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  </body>
+</html>

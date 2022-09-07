@@ -1,0 +1,18 @@
+{
+  "name": "code-tour",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tour.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "open ui/index.html && node SequenceDia.js"
+  },
+  "author": "Sara Maia",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "node": "^16.17.0"
+  }
+}
