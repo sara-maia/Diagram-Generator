@@ -26,7 +26,7 @@ Assumes you already have `git`, `node (15.3.0 up)`, and `npm` installed on your 
 - Clone repo:
 
 ```
-git clone git@github.com:sara-maia/Generate-Diagram.git
+git clone git@github.com:sara-maia/Diagram-Generator.git
 ```
 
 - Install dependencies:
