@@ -15,7 +15,7 @@ The tool executes the following tasks:
 
 Demo:
 
-![Screen Demo]()
+![DiaGen](https://user-images.githubusercontent.com/109988361/188956170-3f9af6a0-243c-40cd-984c-902c44250e7b.gif)
 
 # Getting Started
 
