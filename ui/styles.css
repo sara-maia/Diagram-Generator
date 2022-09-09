@@ -109,8 +109,7 @@ h2 {
 
 .info-box-modal {
     position: absolute;
-    display: block;
-    visibility: hidden;
+    display: none;
     padding: 4rem;
     width: 60vw;
     top: 26vh;
@@ -119,6 +118,7 @@ h2 {
     color: white;
     pointer-events: none;
     z-index: 2;
+    transition: all 5s;
     /* overflow-y: scroll; */
 }
 
@@ -131,14 +131,17 @@ h2 {
 }
 
 .info-box:hover + .info-box-modal{
-    visibility: visible;
-    transition: all 0.5s;
+    display: block;
+}
+
+.prettyprint {
+    background-color: rgb(227, 226, 226);
+    padding: 1rem;
+    color: initial;
 }
 
 .code-highlight {
-    background-color: black;
-    color: yellow;
-    font-weight: bold;
+    background-color: rgb(252, 216, 177);
     margin: 0;
 }
 
