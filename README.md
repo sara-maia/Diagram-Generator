@@ -15,7 +15,7 @@ The tool executes the following tasks:
 
 Demo:
 
-![Screen Demo]()
+![DiaGen](https://user-images.githubusercontent.com/109988361/188956170-3f9af6a0-243c-40cd-984c-902c44250e7b.gif)
 
 # Getting Started
 
@@ -26,7 +26,7 @@ Assumes you already have `git`, `node (15.3.0 up)`, and `npm` installed on your 
 - Clone repo:
 
 ```
-git clone git@github.com:sara-maia/Generate-Diagram.git
+git clone git@github.com:sara-maia/Diagram-Generator.git
 ```
 
 - Install dependencies:
