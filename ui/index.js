@@ -3,6 +3,7 @@ const folderForm = document.querySelector("#folderForm");
 const folderField = document.querySelector("#folderField");
 const umlForm = document.querySelector("#umlForm");
 const umlField = document.querySelector("#umlField");
+const exportButton = document.querySelector("#buttonExport");
 const canvas = document.querySelector("#canvas");
 
 let tour;
@@ -26,6 +27,19 @@ umlForm.addEventListener("submit", (e) => {
   updateDiagram(umlField.value);
 });
 
+exportButton.addEventListener("click", (e) => {
+  e.preventDefault();
+  
+  const copyText = JSON.stringify(
+    {tour, uml, diagram, createdAt: Date.now()}
+  )
+  navigator.clipboard.writeText(copyText)
+  .then( 
+    () => alert("JSON code copied to clipboard"),
+    console.log(copyText)
+  )
+});
+
 const updateUml = (newUml) => {
   umlField.value = newUml;
   if (newUml !== loadingMsg) {
@@ -37,12 +51,13 @@ const updateTourData = (folderPath) => {
   fetchData("tour", folderPath)
     .then((tourStops) => {
       tour = tourStops;
-      console.log(tour);
       return fetchData("uml", tourStops);
     })
     .then((newUml) => {
       updateUml(newUml);
       updateDiagram(newUml);
+      exportButton.disabled = false;
+      exportButton.classList.remove("button-disabled")
     })
     .catch((err) => console.error(err));
 };

@@ -8,19 +8,11 @@
   </head>
   <body>
     <main class="main">
+      <h1>Sequence Diagram Generator</h1>
       <section class="input-section">
         <div>
           <div class="instructions-box">
-            <p>Add comments to code in the following format:</p>
-            <p class="instructions-example instructions-example-comment">
-              //@@@tourStart(step:01 id:4753475)
-            </p>
-            <p class="instructions-example">
-              const code = "whatever existing code here"
-            </p>
-            <p class="instructions-example instructions-example-comment">
-              //@@@tourEnd
-            </p>
+            <p>Visit the <a href="https://github.com/sara-maia/Diagram-Generator#usage" target="_blank" class="instructions-link"> GitHub page </a> for instructions</p>
             <h2>STEP 1 - Add comments to code</h2>
           </div>
           <form class="folder-form form" id="folderForm">
@@ -47,8 +39,8 @@ UML code will load here</textarea
       <div class="canvas" id="canvas">
         <!-- <p>Generated Sequence Diagram will display here</p> -->
       </div>
-      <button class="button-disabled" id="buttonGeneratePage" disabled>
-        STEP 4 - Save standalone diagram page
+      <button class="button-disabled button-centered" id="buttonExport" disabled>
+        STEP 4 - Copy JSON
       </button>
     </main>
     <script src="./index.js"></script>

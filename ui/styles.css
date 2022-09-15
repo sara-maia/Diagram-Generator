@@ -1,5 +1,18 @@
+html, body {
+    margin: 0;
+}
+
 h1, h2, button {
     font-family: "Basier circle",-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+h1 {
+    font-size: 1.3rem;
+    background-color: #1e293b;
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+    margin: 0 0 1rem 0;
 }
 
 h2 {
@@ -9,7 +22,7 @@ h2 {
     border-top: 2px solid #eee;
     padding-top: 0.5rem;
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 3.5rem;
 }
 
 .input-section {
@@ -34,6 +47,7 @@ h2 {
 	color: #8597a3;
 	position: absolute;
 	top: 1.5rem;
+    left: 2rem;
     font-size: 1.3rem;
 	transition: .25s ease;
 }
@@ -145,17 +159,30 @@ h2 {
     margin: 0;
 }
 
-.instructions-example {
-    font-size: 0.9rem;
-    margin: 0;
-    padding: 0 0 0 1rem;
+.instructions-box {
+    text-align: center;
 }
 
-.instructions-example-comment {
+.instructions-link, .instructions-link:hover, .instructions-link:visited {
+    color: darkcyan;
+    text-decoration: dotted underline;
+}
+
+/* .instructions-example-comment {
     color: darkgreen;
+} */
+
+.button-centered {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    margin-left: 50%;
+    transform: translateX(-50%);
 }
 
 .button-disabled {
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
     padding-left: 2rem;
     padding-right: 2rem;
     position: fixed;
