@@ -10,20 +10,24 @@ function createPlantUmlText(tourStops) {
     "@startuml",
     "!theme aws-orange",
     "actor Client",
-    `Client -> ${tourStops[order[0].index].fileName.replace(
-      /-/g,
-      ""
-    )}: placeholder message`
+    `Client -> ${tourStops[order[0].index].title}: placeholder message`
   );
   for (let i = 0; i < order.length - 1; i++) {
-    const origin = tourStops[order[i].index].fileName;
-    const dest = tourStops[order[i + 1].index].fileName;
+    const origin = tourStops[order[i].index].title;
+    const dest = tourStops[order[i + 1].index].title;
     if (!findBetween(origin, 0, i, order, tourStops)) {
       uml.push("activate " + origin.replace(/-/g, ""));
     }
     if (origin != dest) {
       const isReturn = routeMap.get(dest) === origin;
-      uml.push(formatUmlLine(origin, dest, "placeholder message", isReturn));
+      uml.push(
+        formatUmlLine(
+          origin,
+          dest,
+          tourStops[order[i].index].outboundMessage || "placeholder message",
+          isReturn
+        )
+      );
       if (isReturn) {
         routeMap.delete(dest);
       } else {
@@ -65,7 +69,7 @@ function getIndexOrder(objArr) {
 function findBetween(name, startIndex, endIndex, order, tourObjs) {
   let includesName = false;
   for (let i = startIndex; i < endIndex; i++) {
-    if (tourObjs[order[i].index].fileName === name) {
+    if (tourObjs[order[i].index].title === name) {
       includesName = true;
     }
   }

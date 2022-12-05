@@ -29,15 +29,16 @@ umlForm.addEventListener("submit", (e) => {
 
 exportButton.addEventListener("click", (e) => {
   e.preventDefault();
-  
-  const copyText = JSON.stringify(
-    {tour, uml, diagram, createdAt: Date.now()}
-  )
-  navigator.clipboard.writeText(copyText)
-  .then( 
-    () => alert("JSON code copied to clipboard"),
-    console.log(copyText)
-  )
+
+  const copyText = JSON.stringify({
+    tour,
+    uml,
+    diagram,
+    createdAt: Date.now(),
+  });
+  navigator.clipboard
+    .writeText(copyText)
+    .then(() => alert("JSON code copied to clipboard"), console.log(copyText));
 });
 
 const updateUml = (newUml) => {
@@ -57,7 +58,7 @@ const updateTourData = (folderPath) => {
       updateUml(newUml);
       updateDiagram(newUml);
       exportButton.disabled = false;
-      exportButton.classList.remove("button-disabled")
+      exportButton.classList.remove("button-disabled");
     })
     .catch((err) => console.error(err));
 };
@@ -91,29 +92,28 @@ async function fetchData(endpoint, data) {
 function createBoxesData() {
   const boxes = [];
   const diagramTags = document.getElementsByTagName("text");
-  const tourNames = [...new Set(tour.map((tourStop) => tourStop.fileName))];
+  const tourNames = [...new Set(tour.map((tourStop) => tourStop.title))];
   tourNames.forEach((name) => {
-    const pair = [...diagramTags].filter((diagramTag) =>
-      diagramTag.innerHTML.includes(name.replace(/-/g, ""))
+    const pair = [...diagramTags].filter(
+      (diagramTag) => diagramTag.innerHTML === name.replace(/-/g, "")
     );
-    console.log("pairs", pair);
     const rect1 = pair[0]?.getBoundingClientRect();
     const rect2 = pair[1]?.getBoundingClientRect();
-    const tourObj = tour.find((tourStop) => tourStop.fileName === name);
+    const tourObj = tour.find((tourStop) => tourStop.title === name);
     pair[0].innerHTML = pair[1].innerHTML = name;
     // tourObj.fileFolder.split("/").at(-1) + "/" + name;
 
     const box = {
-      id: tourObj.ids[0],
+      id: tourObj.ids?.[0],
       file: tourObj.fileName,
       folder: tourObj.fileFolder,
       snippet: tourObj.codeSnippet,
+      lines: `${tourObj.codeLines?.start} to ${tourObj.codeLines?.end}`,
       xLeft: Math.min(rect1.left, rect2.left) - 10,
       xRight: Math.max(rect1.right, rect2.right) + 10,
       yTop: Math.min(rect1.top, rect2.top) - 10,
       yBottom: Math.max(rect1.bottom, rect2.bottom) + 10,
     };
-    console.log("box", box);
     boxes.push(box);
   });
   return boxes;
@@ -133,6 +133,8 @@ function createInfoBoxes(boxes) {
     boxDivModal.innerHTML = `<p><strong>file:</strong> ${box.file}</p>
         <hr>
         <p><strong>folder:</strong> ${box.folder}</p>
+        <hr>
+        <p><strong>lines of code:</strong> ${box.lines}</p>
         <hr>
         <p><strong>snippet:</strong></p>
         <p><code><pre class="prettyprint">${box.snippet}</pre></code></p>`;

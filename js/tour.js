@@ -1,5 +1,5 @@
-const START_MARKER = "@@@tourStart";
-const END_MARKER = "@@@tourEnd";
+const START_MARKER = "@tourStart";
+const END_MARKER = "@tourEnd";
 const START_FORMATTER = "<span class='code-highlight'>";
 const END_FORMATTER = "</span>";
 
@@ -26,11 +26,7 @@ async function getFiles(dir) {
         return getFiles(res);
       } else {
         const validExtensions = ["ts", "tsx", "js", "jsx", "html"];
-        const fileExtension = entry.name
-          .split(".")
-          .filter(Boolean) // removes empty extensions (e.g. `filename...txt`)
-          .slice(1)
-          .join(".");
+        const fileExtension = entry.name.split(".").pop();
         if (!validExtensions.includes(fileExtension)) {
           return;
         }
@@ -54,21 +50,51 @@ function formatTourData(filesArray) {
       encoding: "utf8",
       flag: "r",
     });
-    const fileArgs = retrieveArgs(fileString);
-    if (fileArgs) {
-      const codeSnippet = formatCodeSnippet(fileString, file.fileName);
-      const fileObject = {
-        fileName: file.fileName,
-        fileFolder: file.fileFolder,
-        fileExtension: file.fileExtension,
-        steps: fileArgs.step,
-        ids: fileArgs.id,
-        codeSnippet: codeSnippet,
-      };
-      tourData.push(fileObject);
+    if (fileString.includes(START_MARKER)) {
+      const lines = fileString.split(/\r?\n/);
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes(START_MARKER)) {
+          const code = getCodeInfo(lines, i);
+          const tourStop = {
+            ...retrieveArgs(lines[i]),
+            codeSnippet: code.snippet,
+            codeLines: { start: code.startLine, end: code.endLine },
+            fileName: file.fileName,
+            fileFolder: file.fileFolder,
+            fileExtension: file.fileExtension,
+          };
+          tourData.push(tourStop);
+          i = code.endLine;
+        }
+      }
     }
   });
   return tourData;
+}
+
+function getCodeInfo(linesArr, index) {
+  const startLine = index;
+  let lineCounter = index + 1;
+  let endLine;
+  let mainCodeSnippet = [START_FORMATTER];
+  while (lineCounter < linesArr.length) {
+    if (linesArr[lineCounter].includes(END_MARKER)) {
+      mainCodeSnippet.push(END_FORMATTER);
+      endLine = lineCounter;
+      break;
+    }
+    mainCodeSnippet.push(linesArr[lineCounter]);
+    lineCounter++;
+  }
+
+  const upperContext = getUpperContext(linesArr, startLine);
+  const lowerContext = getLowerContext(linesArr, endLine);
+  const codeWithContext = upperContext
+    .concat(mainCodeSnippet, lowerContext)
+    .join("\n");
+
+  return { snippet: codeWithContext, startLine, endLine };
 }
 
 function retrieveArgs(str, initialPosition = 0) {
@@ -91,189 +117,106 @@ function retrieveArgs(str, initialPosition = 0) {
     obj[tup[0]] = tup[1].split(",");
   });
 
-  let nextObj = retrieveArgs(str, argStart);
-  if (nextObj) {
-    obj.id = obj.id.concat(nextObj.id);
-    obj.step = obj.step.concat(nextObj.step);
+  if (obj.outboundMessage?.[0]) {
+    obj.outboundMessage = obj.outboundMessage[0].split("--").join(" ");
   }
+
+  if (obj.title?.[0]) {
+    obj.title = obj.title[0].split("--").join(" ");
+  }
+
   return obj;
 }
 
-function formatCodeSnippet(fileString, file) {
-  const lines = fileString.split(/\r?\n/);
-
-  return formatSnippet(lines, 0, lines.length).join("\n");
-
-  function formatSnippet(linesArray, start, end) {
-    // console.log("file: ", file, " | start line: ", start, " | end line: ", end);
-    const codeOfInterest = findCode(linesArray, start, end);
-    if (!codeOfInterest) {
-      return null;
-    }
-    const upperContext = getUpperContext(linesArray, codeOfInterest.topLine);
-    const lowerContext = getLowerContext(linesArray, codeOfInterest.bottomLine);
-
-    // console.log("file: ", file, " | upper context: ", upperContext);
-    // console.log("file: ", file, " | main code: ", codeOfInterest);
-    // console.log("file: ", file, " | lower context: ", lowerContext);
-
-    let snippet = upperContext.code.concat(
-      codeOfInterest.foundCode,
-      lowerContext.code
-    );
-
-    let nextChunk = formatSnippet(
-      linesArray,
-      lowerContext.bottomLine,
-      linesArray.length
-    );
-    if (nextChunk) {
-      snippet = snippet.concat(nextChunk);
-    }
-
-    return snippet.filter((line) => line.length > 0);
-  }
-
-  function findCode(linesArray, start, end) {
-    let foundCode = [];
-    let topLine;
-    let bottomLine;
-
-    if (end <= start) {
-      return null;
-    }
-
-    for (let i = start; i < end; i++) {
-      if (linesArray[i].includes(START_MARKER)) {
-        i++;
-        foundCode.push(START_FORMATTER);
-        foundCode.push(linesArray[i]);
-        topLine = i - 1;
-      } else if (linesArray[i].includes(END_MARKER)) {
-        foundCode.push(END_FORMATTER);
-        bottomLine = i;
-        break;
-      } else if (foundCode.length > 0) {
-        if (!lineIsComment(linesArray[i])) {
-          foundCode.push(linesArray[i]);
-        }
-      }
-    }
-
-    if (foundCode.length === 0) {
-      return null;
-    }
-
-    return { foundCode, topLine, bottomLine };
-  }
-
-  function getUpperContext(linesArray, lineNumber) {
-    let upperContext = [];
-    let topLine = 0;
-    let bottomLine = lineNumber;
-    let callStatusChanged = false;
-    let currentIdentation = lineIdentation(linesArray[lineNumber + 1]);
-    for (let i = lineNumber - 1; i >= 0; i--) {
-      if (currentIdentation.length === 0) {
-        topLine = i - 1;
-        if (
-          linesArray[i + 1].startsWith("})") ||
-          linesArray[i + 1].startsWith(")")
-        ) {
-          while (i > 0 && lineIdentation(linesArray[i]).length !== 0) {
-            i--;
-          }
-          upperContext.push(linesArray[i]);
-        }
-        break;
-      } else if (linesArray[i].includes(END_MARKER)) {
-        topLine = i - 1;
-        break;
-      } else if (linesArray[i].length < 1 || lineIsComment(linesArray[i])) {
-        callStatusChanged = false;
-      } else if (
-        lineIdentation(linesArray[i]).length < currentIdentation.length
+function getUpperContext(linesArray, lineNumber) {
+  let upperContext = [];
+  let callStatusChanged = false;
+  let currentIdentation = lineIdentation(linesArray[lineNumber + 1]);
+  for (let i = lineNumber - 1; i >= 0; i--) {
+    if (currentIdentation.length === 0) {
+      if (
+        linesArray[i + 1].startsWith("})") ||
+        linesArray[i + 1].startsWith(")")
       ) {
-        currentIdentation = lineIdentation(linesArray[i]);
-        callStatusChanged = true;
-        upperContext.push(linesArray[i]);
-      } else if (
-        lineIdentation(linesArray[i]).length > currentIdentation.length
-      ) {
-        let tempIdentationSize = lineIdentation(linesArray[i + 1]).length;
-        i--;
-        while (
-          lineIdentation(linesArray[i]).length !== tempIdentationSize &&
-          i >= 0 &&
-          lineIdentation(linesArray[i - 1]).length !== 0 &&
-          !linesArray[i - 1]?.includes(END_MARKER)
-        ) {
+        while (i > 0 && lineIdentation(linesArray[i]).length !== 0) {
           i--;
         }
+        upperContext.push(linesArray[i]);
+      }
+      break;
+    } else if (linesArray[i].length < 1 || lineIsComment(linesArray[i])) {
+      callStatusChanged = false;
+    } else if (
+      lineIdentation(linesArray[i]).length < currentIdentation.length
+    ) {
+      currentIdentation = lineIdentation(linesArray[i]);
+      callStatusChanged = true;
+      upperContext.push(linesArray[i]);
+    } else if (
+      lineIdentation(linesArray[i]).length > currentIdentation.length
+    ) {
+      let tempIdentationSize = lineIdentation(linesArray[i + 1]).length;
+      i--;
+      while (
+        lineIdentation(linesArray[i]).length !== tempIdentationSize &&
+        i >= 0 &&
+        lineIdentation(linesArray[i - 1]).length !== 0 &&
+        !linesArray[i - 1]?.includes(END_MARKER)
+      ) {
+        i--;
+      }
+      callStatusChanged = false;
+    } else {
+      if (callStatusChanged) {
+        upperContext.push(currentIdentation + "...");
         callStatusChanged = false;
-      } else {
-        if (callStatusChanged) {
-          upperContext.push(currentIdentation + "...");
-          callStatusChanged = false;
-        }
       }
     }
-    return { code: upperContext.reverse(), topLine, bottomLine };
   }
+  return upperContext.reverse();
+}
 
-  function getLowerContext(linesArray, lineNumber) {
-    let lowerContext = [];
-    let topLine = lineNumber;
-    let bottomLine;
-    let callStatusChanged = false;
-    let currentIdentation = lineIdentation(linesArray[lineNumber]);
-    for (let i = lineNumber + 2; i < linesArray.length; i++) {
-      if (currentIdentation.length === 0) {
-        bottomLine = i - 1;
-        break;
-      } else if (linesArray[i].includes(START_MARKER)) {
-        // lowerContext = [];
-        bottomLine = i;
-        break;
-      } else if (linesArray[i].length < 1 || lineIsComment(linesArray[i])) {
-        callStatusChanged = false;
-      } else if (
-        lineIdentation(linesArray[i]).length < currentIdentation.length
-      ) {
-        currentIdentation = lineIdentation(linesArray[i]);
-        callStatusChanged = true;
-        if (linesArray[i].endsWith("{")) {
-          lowerContext.push(linesArray[i] + "...}");
-        } else {
-          lowerContext.push(linesArray[i]);
-        }
-        bottomLine = i;
-      } else if (
-        lineIdentation(linesArray[i]).length > currentIdentation.length
-      ) {
-        let tempIdentationSize = lineIdentation(linesArray[i - 1]).length;
-        i++;
-        while (
-          lineIdentation(linesArray[i]).length !== tempIdentationSize &&
-          lineIdentation(linesArray[i + 1]).length !== 0 &&
-          i < linesArray.length &&
-          !linesArray[i + 1]?.includes(START_MARKER)
-        ) {
-          i++;
-        }
-        callStatusChanged = false;
+function getLowerContext(linesArray, lineNumber) {
+  let lowerContext = [];
+  let callStatusChanged = false;
+  let currentIdentation = lineIdentation(linesArray[lineNumber]);
+  for (let i = lineNumber + 2; i < linesArray.length; i++) {
+    if (currentIdentation.length === 0) {
+      break;
+    } else if (linesArray[i].length < 1 || lineIsComment(linesArray[i])) {
+      callStatusChanged = false;
+    } else if (
+      lineIdentation(linesArray[i]).length < currentIdentation.length
+    ) {
+      currentIdentation = lineIdentation(linesArray[i]);
+      callStatusChanged = true;
+      if (linesArray[i].endsWith("{")) {
+        lowerContext.push(linesArray[i] + "...}");
       } else {
-        if (callStatusChanged) {
-          lowerContext.push(currentIdentation + "...");
-          callStatusChanged = false;
-        }
+        lowerContext.push(linesArray[i]);
+      }
+    } else if (
+      lineIdentation(linesArray[i]).length > currentIdentation.length
+    ) {
+      let tempIdentationSize = lineIdentation(linesArray[i - 1]).length;
+      i++;
+      while (
+        lineIdentation(linesArray[i]).length !== tempIdentationSize &&
+        lineIdentation(linesArray[i + 1]).length !== 0 &&
+        i < linesArray.length &&
+        !linesArray[i + 1]?.includes(START_MARKER)
+      ) {
+        i++;
+      }
+      callStatusChanged = false;
+    } else {
+      if (callStatusChanged) {
+        lowerContext.push(currentIdentation + "...");
+        callStatusChanged = false;
       }
     }
-    if (!bottomLine) {
-      bottomLine = linesArray.length;
-    }
-    return { code: lowerContext, topLine, bottomLine };
   }
+  return lowerContext;
 }
 
 function lineIdentation(string) {
@@ -303,7 +246,7 @@ function lineIsComment(line) {
   }
 }
 
-// assembleTour("/Users/Sara.Maia/Dev/zen/packages/api").then((res) =>
+// assembleTour("/Users/Sara.Maia/Dev/zen/packages/data/src/pricing").then((res) =>
 //   console.log(res)
 // );
 
